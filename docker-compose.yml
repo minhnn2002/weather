@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg_data:/var/lib/postgresql/data
+
+  python-app:
+    build: .
+    container_name: python
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    environment:
+      - PG_HOST=${PG_USER}
+      - PG_DB=${PG_DB}
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+    command: >
+      bash -c "sleep 5 &&
+               python etl/load.py &&
+               sleep 100 "
+volumes:
+  pg_data:
